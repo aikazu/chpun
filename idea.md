@@ -1,0 +1,1 @@
+create cookie clicker like game, but the concept is about punching picture that user upload, default placeholder is person named Chokoui with already placeholder picture, but the user can change the name and picture in setting, the picture will become fixed resolution potrait like photo profile
