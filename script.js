@@ -1,28 +1,4 @@
-class Modal {
-    constructor(modalId, closeButton) {
-        this.modal = document.getElementById(modalId);
-        this.closeButton = closeButton;
-        this.title = this.modal.querySelector('#modal-title');
-        this.body = this.modal.querySelector('#modal-body');
-
-        this.closeButton.addEventListener('click', () => this.hide());
-        window.addEventListener('click', (event) => {
-            if (event.target === this.modal) {
-                this.hide();
-            }
-        });
-    }
-
-    show(title, content) {
-        this.title.innerHTML = title;
-        this.body.innerHTML = content;
-        this.modal.classList.remove('hidden');
-    }
-
-    hide() {
-        this.modal.classList.add('hidden');
-    }
-}
+import { Modal } from './modal.js';
 
 const punchTarget = document.getElementById('punch-target');
 const punchCount = document.getElementById('punch-count');
@@ -34,7 +10,49 @@ const upgradesButton = document.getElementById('upgrades-button');
 const comboCounter = document.getElementById('combo-counter');
 const comboBar = document.getElementById('combo-bar');
 const particlesContainer = document.getElementById('particles-container');
+const achievementsButton = document.getElementById('achievements-button');
 const prestigeButton = document.getElementById('prestige-button');
+
+const achievements = {
+    firstPunch: { name: 'First Blood... or Punch', unlocked: false },
+    carpalTunnel: { name: 'Carpal Tunnel Here I Come', unlocked: false },
+    onePunchMan: { name: 'The One-Punch Man', unlocked: false },
+    over9000: { name: "It's Over 9000!", unlocked: false },
+    inevitable: { name: 'I Am Inevitable', unlocked: false },
+};
+
+let unlockedAchievements = JSON.parse(localStorage.getItem('unlockedAchievements')) || {};
+
+function unlockAchievement(id) {
+    if (!unlockedAchievements[id]) {
+        unlockedAchievements[id] = true;
+        localStorage.setItem('unlockedAchievements', JSON.stringify(unlockedAchievements));
+        // You can add a notification here to show the player they unlocked an achievement
+    }
+}
+
+function checkAchievements() {
+    if (count >= 1) unlockAchievement('firstPunch');
+    if (count >= 100000) unlockAchievement('carpalTunnel');
+    if (count >= 1000000) unlockAchievement('onePunchMan');
+    if (prestigePoints > 0) unlockAchievement('inevitable');
+}
+
+achievementsButton.addEventListener('click', () => {
+    let achievementsContent = '<div class="grid grid-cols-1 gap-4">';
+    for (const id in achievements) {
+        const achievement = achievements[id];
+        const isUnlocked = unlockedAchievements[id];
+        achievementsContent += `
+            <div class="p-4 rounded-md ${isUnlocked ? 'bg-green-200' : 'bg-gray-200'}">
+                <h4 class="font-bold">${achievement.name}</h4>
+                <p>${isUnlocked ? 'Unlocked' : 'Locked'}</p>
+            </div>
+        `;
+    }
+    achievementsContent += '</div>';
+    modal.show('Achievements', achievementsContent);
+});
 
 const modal = new Modal('modal', document.querySelector('.close-button'));
 
@@ -49,6 +67,8 @@ let autoPuncherCost = 50;
 let autoPunchers = 0;
 let critChance = 0.05;
 let critMultiplier = 5;
+let comboDuration = 3000;
+let autoPuncherPower = 1;
 
 // Function to load game data from local storage
 function loadGameData() {
@@ -58,6 +78,10 @@ function loadGameData() {
     prestigePoints = parseInt(localStorage.getItem('prestigePoints')) || 0;
     autoPunchers = parseInt(localStorage.getItem('autoPunchers')) || 0;
     autoPuncherCost = parseInt(localStorage.getItem('autoPuncherCost')) || 50;
+    critChance = parseFloat(localStorage.getItem('critChance')) || 0.05;
+    critMultiplier = parseInt(localStorage.getItem('critMultiplier')) || 5;
+    comboDuration = parseInt(localStorage.getItem('comboDuration')) || 3000;
+    autoPuncherPower = parseInt(localStorage.getItem('autoPuncherPower')) || 1;
     const savedName = localStorage.getItem('name');
     const savedImage = localStorage.getItem('image');
 
@@ -80,21 +104,75 @@ function saveGameData() {
     localStorage.setItem('prestigePoints', prestigePoints);
     localStorage.setItem('autoPunchers', autoPunchers);
     localStorage.setItem('autoPuncherCost', autoPuncherCost);
+    localStorage.setItem('critChance', critChance);
+    localStorage.setItem('critMultiplier', critMultiplier);
+    localStorage.setItem('comboDuration', comboDuration);
+    localStorage.setItem('autoPuncherPower', autoPuncherPower);
 }
 
 // Initial load
 loadGameData();
 
 setInterval(() => {
-    const autoPunchAmount = autoPunchers * (1 + prestigePoints * 0.1);
+    const autoPunchAmount = autoPunchers * autoPuncherPower * (1 + prestigePoints * 0.1);
     if (autoPunchAmount > 0) {
         count += autoPunchAmount;
         punchCount.textContent = Math.floor(count);
         updatePrestigeButton();
+        checkAchievements();
+        saveGameData();
     }
 }, 1000);
 
-gsap.to(punchTarget, { scale: 1.05, duration: 1, yoyo: true, repeat: -1, ease: "power1.inOut" });
+const powerUpContainer = document.getElementById('power-up-container');
+
+const powerUps = [
+    {
+        name: 'Frenzy Mode',
+        duration: 10000,
+        activate() {
+            power *= 10;
+            setTimeout(() => {
+                power /= 10;
+            }, this.duration);
+        }
+    },
+    {
+        name: 'Punch-splosion',
+        activate() {
+            count += power * 100;
+            updatePrestigeButton();
+            checkAchievements();
+        }
+    }
+];
+
+function spawnPowerUp() {
+    const powerUp = powerUps[Math.floor(Math.random() * powerUps.length)];
+    const powerUpElement = document.createElement('div');
+    powerUpElement.textContent = powerUp.name;
+    powerUpElement.classList.add('power-up', 'absolute', 'bg-yellow-400', 'text-white', 'font-bold', 'py-2', 'px-4', 'rounded-full', 'cursor-pointer', 'pointer-events-auto');
+    powerUpElement.style.left = `${Math.random() * 80 + 10}%`;
+    powerUpElement.style.top = `${Math.random() * 80 + 10}%`;
+    powerUpElement.style.zIndex = '1000';
+
+    powerUpElement.addEventListener('click', () => {
+        powerUp.activate();
+        punchCount.textContent = Math.floor(count);
+        saveGameData();
+        powerUpElement.remove();
+    });
+
+    powerUpContainer.appendChild(powerUpElement);
+
+    setTimeout(() => {
+        if (powerUpElement.parentNode) {
+            powerUpElement.remove();
+        }
+    }, 5000);
+}
+
+setInterval(spawnPowerUp, 15000);
 
 // Punch event
 punchTarget.addEventListener('click', (e) => {
@@ -102,17 +180,23 @@ punchTarget.addEventListener('click', (e) => {
     const isCrit = Math.random() < critChance;
     if (isCrit) {
         amount *= critMultiplier;
+        if (amount > 9000) unlockAchievement('over9000');
     }
 
     count += amount;
     punchCount.textContent = Math.floor(count);
-    punchSound.currentTime = 0;
-    punchSound.play();
+    try {
+        punchSound.currentTime = 0;
+        punchSound.play().catch(() => {});
+    } catch (e) {
+        // Audio play failed, continue without sound
+    }
     gsap.to(punchTarget, { scale: 0.9, duration: 0.1, yoyo: true, repeat: 1 });
     createParticles(isCrit ? 100 : 30);
     handleCombo();
     showFloatingNumber(Math.floor(amount), e.clientX, e.clientY, isCrit);
     updatePrestigeButton();
+    checkAchievements();
 });
 
 // Settings and Upgrades event listeners
@@ -156,43 +240,116 @@ settingsButton.addEventListener('click', () => {
     });
 });
 
+function upgradePower(callback) {
+    if (count >= cost) {
+        count -= cost;
+        power++;
+        cost = Math.ceil(cost * 1.5);
+        punchCount.textContent = count;
+        saveGameData();
+        callback();
+    }
+}
+
+function buyAutoPuncher(callback) {
+    if (count >= autoPuncherCost) {
+        count -= autoPuncherCost;
+        autoPunchers++;
+        autoPuncherCost = Math.ceil(autoPuncherCost * 1.5);
+        punchCount.textContent = count;
+        saveGameData();
+        callback();
+    }
+}
+
+function upgradeCritChance(callback) {
+    const upgradeCost = Math.ceil(cost * 2);
+    if (count >= upgradeCost) {
+        count -= upgradeCost;
+        critChance += 0.005;
+        punchCount.textContent = count;
+        saveGameData();
+        callback();
+    }
+}
+
+function upgradeCritMultiplier(callback) {
+    const upgradeCost = Math.ceil(cost * 5);
+    if (count >= upgradeCost) {
+        count -= upgradeCost;
+        critMultiplier++;
+        punchCount.textContent = count;
+        saveGameData();
+        callback();
+    }
+}
+
+function upgradeComboDuration(callback) {
+    const upgradeCost = Math.ceil(cost * 1.2);
+    if (count >= upgradeCost) {
+        count -= upgradeCost;
+        comboDuration += 100;
+        punchCount.textContent = count;
+        saveGameData();
+        callback();
+    }
+}
+
+function upgradeAutoPuncherPower(callback) {
+    const upgradeCost = Math.ceil(autoPuncherCost * 3);
+    if (count >= upgradeCost) {
+        count -= upgradeCost;
+        autoPuncherPower++;
+        punchCount.textContent = count;
+        saveGameData();
+        callback();
+    }
+}
+
 upgradesButton.addEventListener('click', () => {
     const renderUpgrades = () => {
         const upgradesContent = `
-            <div>
-                <p class="text-lg">Punches per click: <span class="font-bold">${power}</span></p>
-                <p class="text-lg">Upgrade cost: <span class="font-bold">${cost}</span></p>
-                <button id="upgrade-button" class="mt-6 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy Upgrade</button>
-            </div>
-            <div class="mt-8">
-                <p class="text-lg">Auto Punchers: <span class="font-bold">${autoPunchers}</span></p>
-                <p class="text-lg">Upgrade cost: <span class="font-bold">${autoPuncherCost}</span></p>
-                <button id="buy-auto-puncher-button" class="mt-6 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy Auto Puncher</button>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-lg">Punches per click: <span class="font-bold">${power}</span></p>
+                    <p class="text-lg">Upgrade cost: <span class="font-bold">${cost}</span></p>
+                    <button id="upgrade-button" class="mt-2 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy</button>
+                </div>
+                <div>
+                    <p class="text-lg">Auto Punchers: <span class="font-bold">${autoPunchers}</span></p>
+                    <p class="text-lg">Upgrade cost: <span class="font-bold">${autoPuncherCost}</span></p>
+                    <button id="buy-auto-puncher-button" class="mt-2 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy</button>
+                </div>
+                <div>
+                    <p class="text-lg">Crit Chance: <span class="font-bold">${(critChance * 100).toFixed(2)}%</span></p>
+                    <p class="text-lg">Upgrade cost: <span class="font-bold">${Math.ceil(cost * 2)}</span></p>
+                    <button id="upgrade-crit-chance-button" class="mt-2 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy</button>
+                </div>
+                <div>
+                    <p class="text-lg">Crit Multiplier: <span class="font-bold">${critMultiplier}x</span></p>
+                    <p class="text-lg">Upgrade cost: <span class="font-bold">${Math.ceil(cost * 5)}</span></p>
+                    <button id="upgrade-crit-multiplier-button" class="mt-2 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy</button>
+                </div>
+                <div>
+                    <p class="text-lg">Combo Duration: <span class="font-bold">${(comboDuration / 1000).toFixed(1)}s</span></p>
+                    <p class="text-lg">Upgrade cost: <span class="font-bold">${Math.ceil(cost * 1.2)}</span></p>
+                    <button id="upgrade-combo-duration-button" class="mt-2 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy</button>
+                </div>
+                <div>
+                    <p class="text-lg">Auto Puncher Power: <span class="font-bold">${autoPuncherPower}</span></p>
+                    <p class="text-lg">Upgrade cost: <span class="font-bold">${Math.ceil(autoPuncherCost * 3)}</span></p>
+                    <button id="upgrade-auto-puncher-power-button" class="mt-2 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy</button>
+                </div>
             </div>
         `;
         modal.show('Upgrades', upgradesContent);
 
-        document.getElementById('upgrade-button').addEventListener('click', () => {
-            if (count >= cost) {
-                count -= cost;
-                power++;
-                cost = Math.ceil(cost * 1.5);
-                punchCount.textContent = count;
-                saveGameData();
-                renderUpgrades();
-            }
-        });
-
-        document.getElementById('buy-auto-puncher-button').addEventListener('click', () => {
-            if (count >= autoPuncherCost) {
-                count -= autoPuncherCost;
-                autoPunchers++;
-                autoPuncherCost = Math.ceil(autoPuncherCost * 1.5);
-                punchCount.textContent = count;
-                saveGameData();
-                renderUpgrades();
-            }
-        });
+        document.getElementById('upgrade-button').addEventListener('click', () => upgradePower(renderUpgrades));
+        document.getElementById('buy-auto-puncher-button').addEventListener('click', () => buyAutoPuncher(renderUpgrades));
+        document.getElementById('upgrade-crit-chance-button').addEventListener('click', () => upgradeCritChance(renderUpgrades));
+        document.getElementById('upgrade-crit-multiplier-button').addEventListener('click', () => upgradeCritMultiplier(renderUpgrades));
+        document.getElementById('upgrade-combo-duration-button').addEventListener('click', () => upgradeComboDuration(renderUpgrades));
+        document.getElementById('upgrade-auto-puncher-power-button').addEventListener('click', () => upgradeAutoPuncherPower(renderUpgrades));
     }
     renderUpgrades();
 });
@@ -205,8 +362,16 @@ prestigeButton.addEventListener('click', () => {
         power = 1;
         cost = 10;
         combo = 1;
+        autoPunchers = 0;
+        autoPuncherCost = 50;
+        critChance = 0.05;
+        critMultiplier = 5;
+        comboDuration = 3000;
+        autoPuncherPower = 1;
+        punchCount.textContent = count;
+        comboCounter.textContent = combo + 'x';
         saveGameData();
-        loadGameData();
+        updatePrestigeButton();
         modal.hide();
     }
 });
@@ -237,7 +402,7 @@ function createParticles(amount) {
 
         fragment.appendChild(particle);
 
-        gsap.to(particle, { x, y, opacity: 0, duration: 1, ease: "power2.out", onComplete: () => particle.remove() });
+        gsap.fromTo(particle, { x: 0, y: 0, opacity: 1 }, { x, y, opacity: 0, duration: 1, ease: "power2.out", onComplete: () => particle.remove() });
     }
     particlesContainer.appendChild(fragment);
 }
@@ -245,15 +410,15 @@ function createParticles(amount) {
 function handleCombo() {
     combo++;
     comboCounter.textContent = combo + 'x';
-    gsap.to(comboBar, { width: '100%', duration: 0.1 });
+    gsap.fromTo(comboBar, { width: '0%' }, { width: '100%', duration: 0.2, ease: "power2.out" });
     clearTimeout(comboTimer);
-    comboTimer = setTimeout(resetCombo, 1000);
+    comboTimer = setTimeout(resetCombo, comboDuration);
 }
 
 function resetCombo() {
     combo = 1;
     comboCounter.textContent = combo + 'x';
-    gsap.to(comboBar, { width: '0%', duration: 0.5 });
+    gsap.to(comboBar, { width: '0%', duration: 0.3, ease: "power2.out" });
 }
 
 function showFloatingNumber(amount, x, y, isCrit = false) {
@@ -268,5 +433,5 @@ function showFloatingNumber(amount, x, y, isCrit = false) {
     number.style.pointerEvents = 'none';
     document.body.appendChild(number);
 
-    gsap.to(number, { y: y - 150, opacity: 0, duration: 1.5, ease: "power1.out", onComplete: () => number.remove() });
+    gsap.fromTo(number, { y: y, opacity: 1 }, { y: y - 150, opacity: 0, duration: 1.5, ease: "power1.out", onComplete: () => number.remove() });
 }
