@@ -5,24 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chokoui Puncher</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-    <main class="game-container bg-white rounded-lg shadow-lg p-8 text-center">
-        <h1 id="name" class="text-4xl font-bold mb-4">Chokoui</h1>
-        <img src="pictures.jpg" alt="Chokoui" id="punch-target" class="w-64 h-64 rounded-full border-4 border-gray-800 cursor-pointer transition-transform duration-100 ease-in-out">
-        <p class="text-2xl mt-4">Punches: <span id="punch-count">0</span></p>
+<body class="bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center h-screen">
+    <main class="game-container bg-white/20 backdrop-blur-md rounded-lg shadow-lg p-8 text-center">
+        <h1 id="name" class="text-4xl font-bold mb-4 text-white [text-shadow:_0_2px_2px_rgb(0_0_0_/_50%)]">Chokoui</h1>
+        <img src="pictures.jpg" alt="Chokoui" id="punch-target" class="w-64 h-64 rounded-full border-8 border-white shadow-lg cursor-pointer transition-transform duration-100 ease-in-out animate-pulse">
+        <p class="text-2xl mt-4 text-white [text-shadow:_0_2px_2px_rgb(0_0_0_/_50%)]">Punches: <span id="punch-count">0</span></p>
         <section id="combo-container" class="mt-4">
-            <p class="text-xl">Combo: <span id="combo-counter">1</span>x</p>
-            <div id="combo-bar-container" class="w-full bg-gray-200 rounded-full h-6 mt-2">
-                <div id="combo-bar" class="bg-yellow-400 h-6 rounded-full" style="width: 100%;"></div>
+            <p class="text-xl text-white [text-shadow:_0_2px_2px_rgb(0_0_0_/_50%)]">Combo: <span id="combo-counter">1</span>x</p>
+            <div id="combo-bar-container" class="w-full bg-gray-200/50 rounded-full h-6 mt-2">
+                <div id="combo-bar" class="bg-gradient-to-r from-yellow-300 to-yellow-500 h-6 rounded-full" style="width: 100%;"></div>
             </div>
         </section>
     <audio id="punch-sound" src="punch.wav"></audio>
     <div class="buttons-container mt-6 space-x-4">
-        <button id="settings-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Settings</button>
-        <button id="upgrades-button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Upgrades</button>
-        <button id="prestige-button" class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded hidden">Prestige</button>
+        <button id="settings-button" class="bg-white text-gray-800 font-bold py-2 px-6 rounded-full shadow-md hover:shadow-lg transition-shadow duration-200 ease-in-out">Settings</button>
+        <button id="upgrades-button" class="bg-white text-gray-800 font-bold py-2 px-6 rounded-full shadow-md hover:shadow-lg transition-shadow duration-200 ease-in-out">Upgrades</button>
+        <button id="prestige-button" class="bg-white text-gray-800 font-bold py-2 px-6 rounded-full shadow-md hover:shadow-lg transition-shadow duration-200 ease-in-out hidden">Prestige</button>
     </div>
     </main>
 

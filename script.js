@@ -94,6 +94,8 @@ setInterval(() => {
     }
 }, 1000);
 
+gsap.to(punchTarget, { scale: 1.05, duration: 1, yoyo: true, repeat: -1, ease: "power1.inOut" });
+
 // Punch event
 punchTarget.addEventListener('click', (e) => {
     let amount = power * combo * (1 + prestigePoints * 0.1);
@@ -155,41 +157,44 @@ settingsButton.addEventListener('click', () => {
 });
 
 upgradesButton.addEventListener('click', () => {
-    const upgradesContent = `
-        <div>
-            <p class="text-lg">Punches per click: <span class="font-bold">${power}</span></p>
-            <p class="text-lg">Upgrade cost: <span class="font-bold">${cost}</span></p>
-            <button id="upgrade-button" class="mt-6 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy Upgrade</button>
-        </div>
-        <div class="mt-8">
-            <p class="text-lg">Auto Punchers: <span class="font-bold">${autoPunchers}</span></p>
-            <p class="text-lg">Upgrade cost: <span class="font-bold">${autoPuncherCost}</span></p>
-            <button id="buy-auto-puncher-button" class="mt-6 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy Auto Puncher</button>
-        </div>
-    `;
-    modal.show('Upgrades', upgradesContent);
+    const renderUpgrades = () => {
+        const upgradesContent = `
+            <div>
+                <p class="text-lg">Punches per click: <span class="font-bold">${power}</span></p>
+                <p class="text-lg">Upgrade cost: <span class="font-bold">${cost}</span></p>
+                <button id="upgrade-button" class="mt-6 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy Upgrade</button>
+            </div>
+            <div class="mt-8">
+                <p class="text-lg">Auto Punchers: <span class="font-bold">${autoPunchers}</span></p>
+                <p class="text-lg">Upgrade cost: <span class="font-bold">${autoPuncherCost}</span></p>
+                <button id="buy-auto-puncher-button" class="mt-6 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">Buy Auto Puncher</button>
+            </div>
+        `;
+        modal.show('Upgrades', upgradesContent);
 
-    document.getElementById('upgrade-button').addEventListener('click', () => {
-        if (count >= cost) {
-            count -= cost;
-            power++;
-            cost = Math.ceil(cost * 1.5);
-            punchCount.textContent = count;
-            saveGameData();
-            modal.hide();
-        }
-    });
+        document.getElementById('upgrade-button').addEventListener('click', () => {
+            if (count >= cost) {
+                count -= cost;
+                power++;
+                cost = Math.ceil(cost * 1.5);
+                punchCount.textContent = count;
+                saveGameData();
+                renderUpgrades();
+            }
+        });
 
-    document.getElementById('buy-auto-puncher-button').addEventListener('click', () => {
-        if (count >= autoPuncherCost) {
-            count -= autoPuncherCost;
-            autoPunchers++;
-            autoPuncherCost = Math.ceil(autoPuncherCost * 1.5);
-            punchCount.textContent = count;
-            saveGameData();
-            modal.hide();
-        }
-    });
+        document.getElementById('buy-auto-puncher-button').addEventListener('click', () => {
+            if (count >= autoPuncherCost) {
+                count -= autoPuncherCost;
+                autoPunchers++;
+                autoPuncherCost = Math.ceil(autoPuncherCost * 1.5);
+                punchCount.textContent = count;
+                saveGameData();
+                renderUpgrades();
+            }
+        });
+    }
+    renderUpgrades();
 });
 
 prestigeButton.addEventListener('click', () => {
