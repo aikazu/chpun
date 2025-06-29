@@ -130,7 +130,7 @@ function saveGameData() {
 loadGameData();
 
 setInterval(() => {
-    const autoPunchAmount = autoPunchers * autoPuncherPower * (1 + prestigePoints * 0.1);
+    const autoPunchAmount = autoPunchers * autoPuncherPower * Math.pow(1.1, prestigePoints);
     if (autoPunchAmount > 0) {
         count += autoPunchAmount;
         updateGameState();
@@ -188,7 +188,7 @@ setInterval(spawnPowerUp, 15000);
 
 // Punch event
 punchTarget.addEventListener('click', (e) => {
-    let amount = power * combo * (1 + prestigePoints * 0.1);
+    let amount = power * combo * Math.pow(1.1, prestigePoints);
     const isCrit = Math.random() < critChance;
     if (isCrit) {
         amount *= critMultiplier;
@@ -362,6 +362,7 @@ prestigeButton.addEventListener('click', () => {
     if (count >= config.PRESTIGE_REQUIREMENT) {
         const newPrestigePoints = Math.floor(count / config.PRESTIGE_REQUIREMENT);
         prestigePoints += newPrestigePoints;
+        config.PRESTIGE_REQUIREMENT *= 1 + newPrestigePoints; // Increase prestige requirement
         count = 0;
         power = 1;
         cost = config.initialCost;
@@ -375,6 +376,7 @@ prestigeButton.addEventListener('click', () => {
         comboCounter.textContent = combo + 'x';
         updateGameState();
         modal.hide();
+        location.reload(); // Reload the page to reset the game state
     }
 });
 
