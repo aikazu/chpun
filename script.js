@@ -1,3 +1,4 @@
+
 import { Modal } from './modal.js';
 
 const punchTarget = document.getElementById('punch-target');
@@ -12,6 +13,16 @@ const comboBar = document.getElementById('combo-bar');
 const particlesContainer = document.getElementById('particles-container');
 const achievementsButton = document.getElementById('achievements-button');
 const prestigeButton = document.getElementById('prestige-button');
+
+const config = {
+    PRESTIGE_REQUIREMENT: 1000000,
+    critChance: 0.05,
+    critMultiplier: 5,
+    comboDuration: 3000,
+    autoPuncherPower: 1,
+    initialCost: 10,
+    initialAutoPuncherCost: 50,
+};
 
 const achievements = {
     firstPunch: { name: 'First Blood... or Punch', unlocked: false },
@@ -58,30 +69,36 @@ const modal = new Modal('modal', document.querySelector('.close-button'));
 
 let count = 0;
 let power = 1;
-let cost = 10;
+let cost = config.initialCost;
 let combo = 1;
 let comboTimer;
 let prestigePoints = 0;
-const PRESTIGE_REQUIREMENT = 1000000;
-let autoPuncherCost = 50;
+let autoPuncherCost = config.initialAutoPuncherCost;
 let autoPunchers = 0;
-let critChance = 0.05;
-let critMultiplier = 5;
-let comboDuration = 3000;
-let autoPuncherPower = 1;
+let critChance = config.critChance;
+let critMultiplier = config.critMultiplier;
+let comboDuration = config.comboDuration;
+let autoPuncherPower = config.autoPuncherPower;
+
+function updateGameState() {
+    punchCount.textContent = Math.floor(count);
+    updatePrestigeButton();
+    checkAchievements();
+    saveGameData();
+}
 
 // Function to load game data from local storage
 function loadGameData() {
-    count = parseInt(localStorage.getItem('count')) || 0;
-    power = parseInt(localStorage.getItem('power')) || 1;
-    cost = parseInt(localStorage.getItem('cost')) || 10;
-    prestigePoints = parseInt(localStorage.getItem('prestigePoints')) || 0;
-    autoPunchers = parseInt(localStorage.getItem('autoPunchers')) || 0;
-    autoPuncherCost = parseInt(localStorage.getItem('autoPuncherCost')) || 50;
-    critChance = parseFloat(localStorage.getItem('critChance')) || 0.05;
-    critMultiplier = parseInt(localStorage.getItem('critMultiplier')) || 5;
-    comboDuration = parseInt(localStorage.getItem('comboDuration')) || 3000;
-    autoPuncherPower = parseInt(localStorage.getItem('autoPuncherPower')) || 1;
+    count = Number(localStorage.getItem('count')) || 0;
+    power = Number(localStorage.getItem('power')) || 1;
+    cost = Number(localStorage.getItem('cost')) || config.initialCost;
+    prestigePoints = Number(localStorage.getItem('prestigePoints')) || 0;
+    autoPunchers = Number(localStorage.getItem('autoPunchers')) || 0;
+    autoPuncherCost = Number(localStorage.getItem('autoPuncherCost')) || config.initialAutoPuncherCost;
+    critChance = Number(localStorage.getItem('critChance')) || config.critChance;
+    critMultiplier = Number(localStorage.getItem('critMultiplier')) || config.critMultiplier;
+    comboDuration = Number(localStorage.getItem('comboDuration')) || config.comboDuration;
+    autoPuncherPower = Number(localStorage.getItem('autoPuncherPower')) || config.autoPuncherPower;
     const savedName = localStorage.getItem('name');
     const savedImage = localStorage.getItem('image');
 
@@ -92,8 +109,7 @@ function loadGameData() {
         punchTarget.src = savedImage;
     }
 
-    punchCount.textContent = count;
-    updatePrestigeButton();
+    updateGameState();
 }
 
 // Function to save game data to local storage
@@ -117,10 +133,7 @@ setInterval(() => {
     const autoPunchAmount = autoPunchers * autoPuncherPower * (1 + prestigePoints * 0.1);
     if (autoPunchAmount > 0) {
         count += autoPunchAmount;
-        punchCount.textContent = Math.floor(count);
-        updatePrestigeButton();
-        checkAchievements();
-        saveGameData();
+        updateGameState();
     }
 }, 1000);
 
@@ -141,8 +154,7 @@ const powerUps = [
         name: 'Punch-splosion',
         activate() {
             count += power * 100;
-            updatePrestigeButton();
-            checkAchievements();
+            updateGameState();
         }
     }
 ];
@@ -184,7 +196,6 @@ punchTarget.addEventListener('click', (e) => {
     }
 
     count += amount;
-    punchCount.textContent = Math.floor(count);
     try {
         punchSound.currentTime = 0;
         punchSound.play().catch(() => {});
@@ -195,8 +206,7 @@ punchTarget.addEventListener('click', (e) => {
     createParticles(isCrit ? 100 : 30);
     handleCombo();
     showFloatingNumber(Math.floor(amount), e.clientX, e.clientY, isCrit);
-    updatePrestigeButton();
-    checkAchievements();
+    updateGameState();
 });
 
 // Settings and Upgrades event listeners
@@ -245,8 +255,7 @@ function upgradePower(callback) {
         count -= cost;
         power++;
         cost = Math.ceil(cost * 1.5);
-        punchCount.textContent = count;
-        saveGameData();
+        updateGameState();
         callback();
     }
 }
@@ -256,8 +265,7 @@ function buyAutoPuncher(callback) {
         count -= autoPuncherCost;
         autoPunchers++;
         autoPuncherCost = Math.ceil(autoPuncherCost * 1.5);
-        punchCount.textContent = count;
-        saveGameData();
+        updateGameState();
         callback();
     }
 }
@@ -267,8 +275,7 @@ function upgradeCritChance(callback) {
     if (count >= upgradeCost) {
         count -= upgradeCost;
         critChance += 0.005;
-        punchCount.textContent = count;
-        saveGameData();
+        updateGameState();
         callback();
     }
 }
@@ -278,8 +285,7 @@ function upgradeCritMultiplier(callback) {
     if (count >= upgradeCost) {
         count -= upgradeCost;
         critMultiplier++;
-        punchCount.textContent = count;
-        saveGameData();
+        updateGameState();
         callback();
     }
 }
@@ -289,8 +295,7 @@ function upgradeComboDuration(callback) {
     if (count >= upgradeCost) {
         count -= upgradeCost;
         comboDuration += 100;
-        punchCount.textContent = count;
-        saveGameData();
+        updateGameState();
         callback();
     }
 }
@@ -300,8 +305,7 @@ function upgradeAutoPuncherPower(callback) {
     if (count >= upgradeCost) {
         count -= upgradeCost;
         autoPuncherPower++;
-        punchCount.textContent = count;
-        saveGameData();
+        updateGameState();
         callback();
     }
 }
@@ -355,29 +359,27 @@ upgradesButton.addEventListener('click', () => {
 });
 
 prestigeButton.addEventListener('click', () => {
-    if (count >= PRESTIGE_REQUIREMENT) {
-        const newPrestigePoints = Math.floor(count / PRESTIGE_REQUIREMENT);
+    if (count >= config.PRESTIGE_REQUIREMENT) {
+        const newPrestigePoints = Math.floor(count / config.PRESTIGE_REQUIREMENT);
         prestigePoints += newPrestigePoints;
         count = 0;
         power = 1;
-        cost = 10;
+        cost = config.initialCost;
         combo = 1;
         autoPunchers = 0;
-        autoPuncherCost = 50;
-        critChance = 0.05;
-        critMultiplier = 5;
-        comboDuration = 3000;
-        autoPuncherPower = 1;
-        punchCount.textContent = count;
+        autoPuncherCost = config.initialAutoPuncherCost;
+        critChance = config.critChance;
+        critMultiplier = config.critMultiplier;
+        comboDuration = config.comboDuration;
+        autoPuncherPower = config.autoPuncherPower;
         comboCounter.textContent = combo + 'x';
-        saveGameData();
-        updatePrestigeButton();
+        updateGameState();
         modal.hide();
     }
 });
 
 function updatePrestigeButton() {
-    if (count >= PRESTIGE_REQUIREMENT) {
+    if (count >= config.PRESTIGE_REQUIREMENT) {
         prestigeButton.classList.remove('hidden');
     } else {
         prestigeButton.classList.add('hidden');
@@ -425,13 +427,14 @@ function showFloatingNumber(amount, x, y, isCrit = false) {
     const number = document.createElement('div');
     number.textContent = `+${amount}`;
     number.style.position = 'absolute';
-    number.style.left = x + 'px';
-    number.style.top = y + 'px';
+    const rect = punchTarget.getBoundingClientRect();
+    number.style.left = (rect.left + rect.width / 2) + 'px';
+    number.style.top = (rect.top + rect.height / 2) + 'px';
     number.style.fontSize = isCrit ? '36px' : '24px';
     number.style.fontWeight = 'bold';
     number.style.color = isCrit ? '#ff4d4d' : '#ffc107';
     number.style.pointerEvents = 'none';
     document.body.appendChild(number);
 
-    gsap.fromTo(number, { y: y, opacity: 1 }, { y: y - 150, opacity: 0, duration: 1.5, ease: "power1.out", onComplete: () => number.remove() });
+    gsap.fromTo(number, { y: 0, opacity: 1 }, { y: -150, opacity: 0, duration: 1.5, ease: "power1.out", onComplete: () => number.remove() });
 }
