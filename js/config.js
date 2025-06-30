@@ -11,28 +11,257 @@ export const config = {
 
 // Achievement definitions
 export const achievements = {
-    firstPunch: { name: 'First Blood... or Punch', unlocked: false },
-    carpalTunnel: { name: 'Carpal Tunnel Here I Come', unlocked: false },
-    onePunchMan: { name: 'The One-Punch Man', unlocked: false },
-    over9000: { name: "It's Over 9000!", unlocked: false },
-    inevitable: { name: 'I Am Inevitable', unlocked: false },
+    // Punch Count Achievements
+    firstPunch: { 
+        name: 'First Blood... or Punch', 
+        description: 'Throw your very first punch',
+        reward: 'You\'ve started your journey!',
+        unlocked: false 
+    },
+    hundredPunches: { 
+        name: 'Getting Warmed Up', 
+        description: 'Throw 100 punches',
+        reward: '+10% punch power for next 50 punches',
+        unlocked: false 
+    },
+    thousandPunches: { 
+        name: 'Punch Enthusiast', 
+        description: 'Throw 1,000 punches',
+        reward: '+25% punch power for next 100 punches',
+        unlocked: false 
+    },
+    carpalTunnel: { 
+        name: 'Carpal Tunnel Here I Come', 
+        description: 'Throw 100,000 punches',
+        reward: 'Permanent +5% critical chance',
+        unlocked: false 
+    },
+    onePunchMan: { 
+        name: 'The One-Punch Man', 
+        description: 'Throw 1,000,000 punches',
+        reward: 'Permanent +2x critical multiplier',
+        unlocked: false 
+    },
+    
+    // Critical Hit Achievements
+    over9000: { 
+        name: "It's Over 9000!", 
+        description: 'Deal over 9,000 damage in a single punch',
+        reward: 'Permanent +10% critical chance',
+        unlocked: false 
+    },
+    criticalMaster: { 
+        name: 'Critical Master', 
+        description: 'Achieve 25% critical hit chance',
+        reward: 'Permanent +1x critical multiplier',
+        unlocked: false 
+    },
+    
+    // Combo Achievements
+    comboStarter: { 
+        name: 'Combo Starter', 
+        description: 'Reach a 10x combo multiplier',
+        reward: '+500ms combo duration',
+        unlocked: false 
+    },
+    comboMaster: { 
+        name: 'Combo Master', 
+        description: 'Reach a 50x combo multiplier',
+        reward: '+1000ms combo duration',
+        unlocked: false 
+    },
+    comboGod: { 
+        name: 'Combo God', 
+        description: 'Reach a 100x combo multiplier',
+        reward: 'Permanent +2000ms combo duration',
+        unlocked: false 
+    },
+    
+    // Auto Puncher Achievements
+    automation: { 
+        name: 'Automation Begins', 
+        description: 'Purchase your first auto puncher',
+        reward: '+1 auto puncher power',
+        unlocked: false 
+    },
+    autoArmy: { 
+        name: 'Auto Punch Army', 
+        description: 'Own 10 auto punchers',
+        reward: '+5 auto puncher power',
+        unlocked: false 
+    },
+    
+    // Prestige Achievements
+    inevitable: { 
+        name: 'I Am Inevitable', 
+        description: 'Perform your first prestige',
+        reward: '+1 bonus prestige point',
+        unlocked: false 
+    },
+    prestigeMaster: { 
+        name: 'Prestige Master', 
+        description: 'Reach 5 prestige points',
+        reward: 'Permanent +20% prestige bonus',
+        unlocked: false 
+    },
+    
+    // Power Achievements
+    powerHouse: { 
+        name: 'Power House', 
+        description: 'Reach 100 punch power',
+        reward: 'Permanent +50% power upgrade efficiency',
+        unlocked: false 
+    },
+    
+    // Speed Achievements
+    speedDemon: { 
+        name: 'Speed Demon', 
+        description: 'Throw 100 punches in 10 seconds',
+        reward: '+20% auto puncher speed',
+        unlocked: false 
+    },
+    
+    // Secret Achievements
+    secretPuncher: { 
+        name: '???', 
+        description: 'A mysterious achievement awaits...',
+        reward: 'Something special...',
+        unlocked: false,
+        hidden: true
+    }
 };
 
-// Power-up definitions
+// Power-up definitions with rarity system
 export const powerUps = [
+    // Common Power-ups (70% spawn chance)
+    {
+        name: 'Power Boost',
+        rarity: 'common',
+        color: '#4ade80', // green
+        icon: '💪',
+        description: 'Double your punch power for 8 seconds',
+        duration: 8000,
+        activate() {
+            return { type: 'powerMultiplier', value: 2, duration: this.duration };
+        }
+    },
+    {
+        name: 'Quick Punches',
+        rarity: 'common',
+        color: '#60a5fa', // blue
+        icon: '⚡',
+        description: 'Instantly gain 50 punches worth of damage',
+        activate() {
+            return { type: 'instantPunches', value: 50 };
+        }
+    },
+    {
+        name: 'Combo Extender',
+        rarity: 'common',
+        color: '#a78bfa', // purple
+        icon: '🔗',
+        description: 'Extend combo duration by 2 seconds',
+        duration: 2000,
+        activate() {
+            return { type: 'comboDurationBoost', value: 2000 };
+        }
+    },
+    
+    // Uncommon Power-ups (20% spawn chance)
     {
         name: 'Frenzy Mode',
+        rarity: 'uncommon',
+        color: '#f59e0b', // amber
+        icon: '🔥',
+        description: '5x punch power for 10 seconds',
         duration: 10000,
         activate() {
-            // This will be handled by the game state manager
-            return { type: 'powerMultiplier', value: 10, duration: this.duration };
+            return { type: 'powerMultiplier', value: 5, duration: this.duration };
+        }
+    },
+    {
+        name: 'Critical Storm',
+        rarity: 'uncommon',
+        color: '#ef4444', // red
+        icon: '💥',
+        description: '100% critical chance for 6 seconds',
+        duration: 6000,
+        activate() {
+            return { type: 'critChanceBoost', value: 1.0, duration: this.duration };
+        }
+    },
+    {
+        name: 'Auto Punch Surge',
+        rarity: 'uncommon',
+        color: '#06b6d4', // cyan
+        icon: '🤖',
+        description: '3x auto puncher speed for 15 seconds',
+        duration: 15000,
+        activate() {
+            return { type: 'autoPuncherBoost', value: 3, duration: this.duration };
+        }
+    },
+    
+    // Rare Power-ups (8% spawn chance)
+    {
+        name: 'Mega Punch',
+        rarity: 'rare',
+        color: '#8b5cf6', // violet
+        icon: '🌟',
+        description: 'Next punch deals 100x damage',
+        activate() {
+            return { type: 'nextPunchMultiplier', value: 100 };
         }
     },
     {
         name: 'Punch-splosion',
+        rarity: 'rare',
+        color: '#f97316', // orange
+        icon: '💣',
+        description: 'Instantly gain 500 punches worth of damage',
         activate() {
-            // This will be handled by the game state manager
-            return { type: 'instantPunches', value: 100 };
+            return { type: 'instantPunches', value: 500 };
+        }
+    },
+    {
+        name: 'Time Warp',
+        rarity: 'rare',
+        color: '#ec4899', // pink
+        icon: '⏰',
+        description: 'Gain 30 seconds worth of auto punches instantly',
+        activate() {
+            return { type: 'timeWarp', value: 30 };
+        }
+    },
+    
+    // Epic Power-ups (2% spawn chance)
+    {
+        name: 'God Mode',
+        rarity: 'epic',
+        color: '#fbbf24', // yellow
+        icon: '👑',
+        description: '10x power, 100% crit chance for 12 seconds',
+        duration: 12000,
+        activate() {
+            return { type: 'godMode', powerMultiplier: 10, critChance: 1.0, duration: this.duration };
+        }
+    },
+    {
+        name: 'Prestige Boost',
+        rarity: 'epic',
+        color: '#d946ef', // fuchsia
+        icon: '✨',
+        description: 'Gain 10% of prestige requirement instantly',
+        activate() {
+            return { type: 'prestigeBoost', value: 0.1 };
         }
     }
 ];
+
+// Power-up rarity weights for spawn chances
+export const powerUpRarityWeights = {
+    common: 70,
+    uncommon: 20,
+    rare: 8,
+    epic: 2
+};

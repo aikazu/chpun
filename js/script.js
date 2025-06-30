@@ -38,6 +38,10 @@ class Game {
         this.upgradeManager = new UpgradeManager(this.gameState, this.modal);
         this.settingsManager = new SettingsManager(this.gameState, this.modal);
         
+        // Connect managers to game state
+        this.gameState.powerUpManager = this.powerUpManager;
+        this.gameState.comboManager = this.comboManager;
+        
         // Load settings
         this.settingsManager.loadSettings();
         
