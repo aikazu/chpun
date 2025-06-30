@@ -1,3 +1,7 @@
+import { gsap } from 'https://cdn.skypack.dev/gsap';
+import { GAME_CONSTANTS } from './config.js';
+import { UIManager } from './uiManager.js';
+
 // UI utility functions
 const notificationContainer = document.getElementById('notification-container');
 const particlesContainer = document.getElementById('particles-container');
@@ -5,15 +9,42 @@ const punchTarget = document.getElementById('punch-target');
 const comboCounter = document.getElementById('combo-counter');
 const comboBar = document.getElementById('combo-bar');
 
-// Show notification
-export function showNotification(message) {
-    const notification = document.createElement('div');
-    notification.className = 'notification';
-    notification.textContent = message;
-    notificationContainer.appendChild(notification);
+// Initialize UI Manager
+const uiManager = new UIManager();
 
-    gsap.fromTo(notification, { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
-    gsap.to(notification, { opacity: 0, y: -20, duration: 0.5, delay: 3, ease: 'power2.in', onComplete: () => notification.remove() });
+// Show notification
+export function showNotification(message, type = 'info') {
+    uiManager.showNotification(message, type);
+}
+
+// Create particle effect
+export function createParticle(x, y, color = GAME_CONSTANTS.PARTICLES.DEFAULT_COLOR) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.cssText = `
+        position: absolute;
+        left: ${x}px;
+        top: ${y}px;
+        width: ${GAME_CONSTANTS.PARTICLES.SIZE}px;
+        height: ${GAME_CONSTANTS.PARTICLES.SIZE}px;
+        background: ${color};
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: ${GAME_CONSTANTS.PARTICLES.Z_INDEX};
+    `;
+    
+    document.body.appendChild(particle);
+    
+    // Animate particle
+    gsap.to(particle, {
+        x: (Math.random() - 0.5) * GAME_CONSTANTS.PARTICLES.SPREAD,
+        y: -GAME_CONSTANTS.PARTICLES.RISE_MIN - Math.random() * GAME_CONSTANTS.PARTICLES.RISE_VARIANCE,
+        opacity: 0,
+        scale: 0,
+        duration: GAME_CONSTANTS.PARTICLES.DURATION_MIN + Math.random() * GAME_CONSTANTS.PARTICLES.DURATION_VARIANCE,
+        ease: "power2.out",
+        onComplete: () => particle.remove()
+    });
 }
 
 // Create particle effects
@@ -41,6 +72,39 @@ export function createParticles(amount) {
 }
 
 // Show floating damage number
+export function showFloatingDamage(damage, x, y, isCrit = false) {
+    const damageElement = document.createElement('div');
+    damageElement.className = `floating-damage ${isCrit ? 'crit' : ''}`;
+    damageElement.textContent = `+${damage}`;
+    damageElement.style.cssText = `
+        position: absolute;
+        left: ${x}px;
+        top: ${y}px;
+        color: ${isCrit ? GAME_CONSTANTS.UI.CRIT_COLOR : GAME_CONSTANTS.UI.NORMAL_DAMAGE_COLOR};
+        font-size: ${isCrit ? GAME_CONSTANTS.UI.CRIT_FONT_SIZE : GAME_CONSTANTS.UI.NORMAL_FONT_SIZE};
+        font-weight: bold;
+        pointer-events: none;
+        z-index: ${GAME_CONSTANTS.UI.FLOATING_DAMAGE_Z_INDEX};
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    `;
+    
+    document.body.appendChild(damageElement);
+    
+    // Animate floating damage
+    gsap.fromTo(damageElement,
+        { opacity: 1, scale: 0.5 },
+        {
+            opacity: 0,
+            scale: 1.2,
+            y: y - GAME_CONSTANTS.UI.FLOATING_DAMAGE_RISE,
+            duration: GAME_CONSTANTS.UI.FLOATING_DAMAGE_DURATION,
+            ease: "power2.out",
+            onComplete: () => damageElement.remove()
+        }
+    );
+}
+
+// Show floating number (legacy function)
 export function showFloatingNumber(amount, x, y, isCrit = false) {
     const number = document.createElement('div');
     number.textContent = `+${amount}`;
@@ -69,7 +133,7 @@ export function updateComboDisplay(combo, bonus = 0, timeRemaining = 0) {
         if (bonus > 0) {
             comboText += ` (+${Math.round(bonus * 100)}%)`;
         }
-        comboCounter.textContent = comboText;
+        uiManager.updateText('combo-counter', comboText);
         
         // Add different animations based on combo level
         if (combo >= 100) {
@@ -80,30 +144,30 @@ export function updateComboDisplay(combo, bonus = 0, timeRemaining = 0) {
             );
             comboCounter.style.color = '#ff6b35';
             comboCounter.style.textShadow = '0 0 10px #ff6b35, 0 0 20px #ff6b35';
-        } else if (combo >= 50) {
+        } else if (combo >= GAME_CONSTANTS.COMBO.RARE_THRESHOLD) {
             // Rare combo animation
             gsap.fromTo(comboCounter, 
                 { scale: 1 },
                 { scale: 1.25, duration: 0.12, yoyo: true, repeat: 1, ease: "back.out(1.5)" }
             );
-            comboCounter.style.color = '#9b59b6';
-            comboCounter.style.textShadow = '0 0 8px #9b59b6';
-        } else if (combo >= 25) {
+            comboCounter.style.color = GAME_CONSTANTS.UI.RARE_COMBO_COLOR;
+            comboCounter.style.textShadow = `0 0 8px ${GAME_CONSTANTS.UI.RARE_COMBO_COLOR}`;
+        } else if (combo >= GAME_CONSTANTS.COMBO.UNCOMMON_THRESHOLD) {
             // Uncommon combo animation
             gsap.fromTo(comboCounter, 
                 { scale: 1 },
                 { scale: 1.2, duration: 0.1, yoyo: true, repeat: 1 }
             );
-            comboCounter.style.color = '#3498db';
-            comboCounter.style.textShadow = '0 0 5px #3498db';
-        } else if (combo >= 10) {
+            comboCounter.style.color = GAME_CONSTANTS.UI.UNCOMMON_COMBO_COLOR;
+            comboCounter.style.textShadow = `0 0 5px ${GAME_CONSTANTS.UI.UNCOMMON_COMBO_COLOR}`;
+        } else if (combo >= GAME_CONSTANTS.COMBO.COMMON_THRESHOLD) {
             // Common combo animation
             gsap.fromTo(comboCounter, 
                 { scale: 1 },
                 { scale: 1.15, duration: 0.1, yoyo: true, repeat: 1 }
             );
-            comboCounter.style.color = '#2ecc71';
-            comboCounter.style.textShadow = '0 0 3px #2ecc71';
+            comboCounter.style.color = GAME_CONSTANTS.UI.COMMON_COMBO_COLOR;
+            comboCounter.style.textShadow = `0 0 3px ${GAME_CONSTANTS.UI.COMMON_COMBO_COLOR}`;
         } else {
             // Basic combo
             gsap.fromTo(comboCounter, 
@@ -117,15 +181,15 @@ export function updateComboDisplay(combo, bonus = 0, timeRemaining = 0) {
     
     if (comboBar && timeRemaining > 0) {
         // Update combo bar based on time remaining
-        const maxDuration = 3000; // Base combo duration
+        const maxDuration = GAME_CONSTANTS.COMBO.BASE_DURATION;
         const fillPercentage = Math.max((timeRemaining / maxDuration) * 100, 0);
         
         // Color based on time remaining
-        let barColor = '#2ecc71'; // Green
-        if (fillPercentage < 30) {
-            barColor = '#e74c3c'; // Red
-        } else if (fillPercentage < 60) {
-            barColor = '#f39c12'; // Orange
+        let barColor = GAME_CONSTANTS.UI.COMBO_BAR_SAFE_COLOR;
+        if (fillPercentage < GAME_CONSTANTS.UI.COMBO_BAR_DANGER_THRESHOLD) {
+            barColor = GAME_CONSTANTS.UI.COMBO_BAR_DANGER_COLOR;
+        } else if (fillPercentage < GAME_CONSTANTS.UI.COMBO_BAR_WARNING_THRESHOLD) {
+            barColor = GAME_CONSTANTS.UI.COMBO_BAR_WARNING_COLOR;
         }
         
         gsap.to(comboBar, {
@@ -157,16 +221,16 @@ export function resetComboDisplay(previousCombo = 1) {
     const comboContainer = document.getElementById('combo-container');
     
     if (comboCounter) {
-        comboCounter.textContent = '1x';
-        comboCounter.style.color = '#ecf0f1';
+        uiManager.updateText('combo-counter', '1x');
+        comboCounter.style.color = GAME_CONSTANTS.UI.DEFAULT_TEXT_COLOR;
         comboCounter.style.textShadow = 'none';
         
         // Different reset animations based on previous combo
-        if (previousCombo >= 50) {
+        if (previousCombo >= GAME_CONSTANTS.COMBO.HIGH_COMBO_THRESHOLD) {
             // Dramatic reset for high combos
             gsap.fromTo(comboCounter,
                 { scale: 1, opacity: 1 },
-                { scale: 0.8, opacity: 0.3, duration: 0.3, ease: "power2.out" }
+                { scale: 0.8, opacity: 0.3, duration: GAME_CONSTANTS.UI.COMBO_RESET_DURATION, ease: "power2.out" }
             ).then(() => {
                 gsap.to(comboCounter, { scale: 1, opacity: 1, duration: 0.2 });
             });
@@ -174,7 +238,7 @@ export function resetComboDisplay(previousCombo = 1) {
             // Simple fade for lower combos
             gsap.fromTo(comboCounter,
                 { opacity: 1 },
-                { opacity: 0.5, duration: 0.2, yoyo: true, repeat: 1 }
+                { opacity: 0.5, duration: GAME_CONSTANTS.UI.COMBO_FADE_DURATION, yoyo: true, repeat: 1 }
             );
         }
     }
@@ -182,8 +246,8 @@ export function resetComboDisplay(previousCombo = 1) {
     if (comboBar) {
         gsap.to(comboBar, {
             width: '0%',
-            backgroundColor: '#2ecc71',
-            duration: 0.5,
+            backgroundColor: GAME_CONSTANTS.UI.COMBO_BAR_SAFE_COLOR,
+            duration: GAME_CONSTANTS.UI.COMBO_RESET_DURATION,
             ease: "power2.out"
         });
     }

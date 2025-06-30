@@ -1,4 +1,5 @@
-import { config } from './config.js';
+import { config, GAME_CONSTANTS } from './config.js';
+import { GameDataManager } from './dataManager.js';
 
 // Game state management
 export class GameState {
@@ -35,55 +36,47 @@ export class GameState {
         this.loadGameData();
     }
 
-    // Load game data from localStorage
+    // Load game data using GameDataManager
     loadGameData() {
-        this.count = Number(localStorage.getItem('count')) || 0;
-        this.power = Number(localStorage.getItem('power')) || 1;
-        this.cost = Number(localStorage.getItem('cost')) || config.initialCost;
-        this.prestigePoints = Number(localStorage.getItem('prestigePoints')) || 0;
-        this.prestigeRequirement = Number(localStorage.getItem('prestigeRequirement')) || config.PRESTIGE_REQUIREMENT;
-        this.autoPunchers = Number(localStorage.getItem('autoPunchers')) || 0;
-        this.autoPuncherCost = Number(localStorage.getItem('autoPuncherCost')) || config.initialAutoPuncherCost;
-        this.critChance = Number(localStorage.getItem('critChance')) || config.critChance;
-        this.critMultiplier = Number(localStorage.getItem('critMultiplier')) || config.critMultiplier;
-        this.comboDuration = Number(localStorage.getItem('comboDuration')) || config.comboDuration;
-        this.autoPuncherPower = Number(localStorage.getItem('autoPuncherPower')) || config.autoPuncherPower;
-        this.autoPuncherSpeed = Number(localStorage.getItem('autoPuncherSpeed')) || 1;
-        this.unlockedAchievements = JSON.parse(localStorage.getItem('unlockedAchievements')) || {};
+        const savedState = GameDataManager.load();
         
-        // Load achievement tracking statistics
-        this.totalPunches = Number(localStorage.getItem('totalPunches')) || 0;
-        this.maxCombo = Number(localStorage.getItem('maxCombo')) || 1;
-        this.achievementBonuses = JSON.parse(localStorage.getItem('achievementBonuses')) || {
-            critChanceBonus: 0,
-            critMultiplierBonus: 0,
-            comboDurationBonus: 0,
-            autoPuncherPowerBonus: 0,
-            prestigeBonus: 0,
-            powerEfficiencyBonus: 0
-        };
+        if (savedState) {
+            // Load from saved data with fallbacks
+            this.count = savedState.count || 0;
+            this.power = savedState.power || 1;
+            this.cost = savedState.cost || config.initialCost;
+            this.prestigePoints = savedState.prestigePoints || 0;
+            this.prestigeRequirement = savedState.prestigeRequirement || config.PRESTIGE_REQUIREMENT;
+            this.autoPunchers = savedState.autoPunchers || 0;
+            this.autoPuncherCost = savedState.autoPuncherCost || config.initialAutoPuncherCost;
+            this.critChance = savedState.critChance || config.critChance;
+            this.critMultiplier = savedState.critMultiplier || config.critMultiplier;
+            this.comboDuration = savedState.comboDuration || config.comboDuration;
+            this.autoPuncherPower = savedState.autoPuncherPower || config.autoPuncherPower;
+            this.autoPuncherSpeed = savedState.autoPuncherSpeed || 1;
+            this.unlockedAchievements = savedState.unlockedAchievements || {};
+            this.totalPunches = savedState.totalPunches || 0;
+            this.maxCombo = savedState.maxCombo || 1;
+            this.achievementBonuses = savedState.achievementBonuses || {
+                critChanceBonus: 0,
+                critMultiplierBonus: 0,
+                comboDurationBonus: 0,
+                autoPuncherPowerBonus: 0,
+                prestigeBonus: 0,
+                powerEfficiencyBonus: 0
+            };
+        }
+        // If no saved data, constructor defaults are already set
     }
 
-    // Save game data to localStorage
+    // Save game data using GameDataManager
     saveGameData() {
-        localStorage.setItem('count', this.count);
-        localStorage.setItem('power', this.power);
-        localStorage.setItem('cost', this.cost);
-        localStorage.setItem('prestigePoints', this.prestigePoints);
-        localStorage.setItem('prestigeRequirement', this.prestigeRequirement);
-        localStorage.setItem('autoPunchers', this.autoPunchers);
-        localStorage.setItem('autoPuncherCost', this.autoPuncherCost);
-        localStorage.setItem('critChance', this.critChance);
-        localStorage.setItem('critMultiplier', this.critMultiplier);
-        localStorage.setItem('comboDuration', this.comboDuration);
-        localStorage.setItem('autoPuncherPower', this.autoPuncherPower);
-        localStorage.setItem('autoPuncherSpeed', this.autoPuncherSpeed);
-        localStorage.setItem('unlockedAchievements', JSON.stringify(this.unlockedAchievements));
-        
-        // Save achievement tracking statistics
-        localStorage.setItem('totalPunches', this.totalPunches);
-        localStorage.setItem('maxCombo', this.maxCombo);
-        localStorage.setItem('achievementBonuses', JSON.stringify(this.achievementBonuses));
+        const success = GameDataManager.save(this);
+        if (!success) {
+            console.warn('Game data save failed - progress may be lost');
+            // Could show user notification here
+        }
+        return success;
     }
 
     // Calculate punch damage
@@ -194,11 +187,19 @@ export class GameState {
 
     // Check if player can afford an upgrade
     canAfford(cost) {
+        if (typeof cost !== 'number' || cost < 0) {
+            console.error('Invalid cost value:', cost);
+            return false;
+        }
         return this.count >= cost;
     }
 
-    // Spend punches
+    // Spend punches with validation
     spend(amount) {
+        if (typeof amount !== 'number' || amount < 0) {
+            console.error('Invalid spend amount:', amount);
+            return false;
+        }
         if (this.canAfford(amount)) {
             this.count -= amount;
             return true;
@@ -210,7 +211,7 @@ export class GameState {
     upgradePower() {
         if (this.spend(this.cost)) {
             this.power++;
-            this.cost = Math.ceil(this.cost * 1.5);
+            this.cost = Math.ceil(this.cost * GAME_CONSTANTS.SCALING.POWER_COST_MULTIPLIER);
             return true;
         }
         return false;
@@ -220,7 +221,7 @@ export class GameState {
     buyAutoPuncher() {
         if (this.spend(this.autoPuncherCost)) {
             this.autoPunchers++;
-            this.autoPuncherCost = Math.ceil(this.autoPuncherCost * 1.5);
+            this.autoPuncherCost = Math.ceil(this.autoPuncherCost * GAME_CONSTANTS.SCALING.AUTO_PUNCHER_COST_MULTIPLIER);
             return true;
         }
         return false;
@@ -229,17 +230,17 @@ export class GameState {
     // Upgrade critical chance
     upgradeCritChance() {
         // Calculate cost based on current crit chance level (exponential scaling)
-        const critLevel = Math.floor((this.critChance - config.critChance) / 0.005) + 1;
-        const upgradeCost = Math.ceil(100 * Math.pow(2, critLevel));
+        const critLevel = Math.floor((this.critChance - config.critChance) / GAME_CONSTANTS.SCALING.CRIT_CHANCE_INCREMENT) + 1;
+        const upgradeCost = Math.ceil(GAME_CONSTANTS.SCALING.CRIT_CHANCE_UPGRADE_BASE_COST * Math.pow(GAME_CONSTANTS.SCALING.CRIT_CHANCE_UPGRADE_MULTIPLIER, critLevel));
         
-        // Cap critical chance at 50%
-        if (this.critChance >= 0.5) {
+        // Cap critical chance at configured maximum
+        if (this.critChance >= GAME_CONSTANTS.LIMITS.MAX_CRIT_CHANCE) {
             return false;
         }
         
         if (this.spend(upgradeCost)) {
-            this.critChance += 0.005;
-            this.critChance = Math.min(this.critChance, 0.5); // Ensure cap
+            this.critChance += GAME_CONSTANTS.SCALING.CRIT_CHANCE_INCREMENT;
+            this.critChance = Math.min(this.critChance, GAME_CONSTANTS.LIMITS.MAX_CRIT_CHANCE); // Ensure cap
             return true;
         }
         return false;
@@ -249,10 +250,10 @@ export class GameState {
     upgradeCritMultiplier() {
         // Calculate cost based on current crit multiplier level
         const critMultLevel = this.critMultiplier - config.critMultiplier + 1;
-        const upgradeCost = Math.ceil(500 * Math.pow(3, critMultLevel));
+        const upgradeCost = Math.ceil(GAME_CONSTANTS.SCALING.CRIT_MULTIPLIER_UPGRADE_BASE_COST * Math.pow(GAME_CONSTANTS.SCALING.CRIT_MULTIPLIER_UPGRADE_MULTIPLIER, critMultLevel));
         
-        // Cap critical multiplier at 20x
-        if (this.critMultiplier >= 20) {
+        // Cap critical multiplier at configured maximum
+        if (this.critMultiplier >= GAME_CONSTANTS.LIMITS.MAX_CRIT_MULTIPLIER) {
             return false;
         }
         
@@ -266,17 +267,17 @@ export class GameState {
     // Upgrade combo duration
     upgradeComboDuration() {
         // Calculate cost based on current combo duration level
-        const comboLevel = Math.floor((this.comboDuration - config.comboDuration) / 100) + 1;
-        const upgradeCost = Math.ceil(200 * Math.pow(1.8, comboLevel));
+        const comboLevel = Math.floor((this.comboDuration - config.comboDuration) / GAME_CONSTANTS.SCALING.COMBO_DURATION_INCREMENT) + 1;
+        const upgradeCost = Math.ceil(GAME_CONSTANTS.SCALING.COMBO_DURATION_UPGRADE_BASE_COST * Math.pow(GAME_CONSTANTS.SCALING.COMBO_DURATION_UPGRADE_MULTIPLIER, comboLevel));
         
-        // Cap combo duration at 10 seconds (10000ms)
-        if (this.comboDuration >= 10000) {
+        // Cap combo duration at configured maximum
+        if (this.comboDuration >= GAME_CONSTANTS.LIMITS.MAX_COMBO_DURATION) {
             return false;
         }
         
         if (this.spend(upgradeCost)) {
-            this.comboDuration += 100;
-            this.comboDuration = Math.min(this.comboDuration, 10000); // Ensure cap
+            this.comboDuration += GAME_CONSTANTS.SCALING.COMBO_DURATION_INCREMENT;
+            this.comboDuration = Math.min(this.comboDuration, GAME_CONSTANTS.LIMITS.MAX_COMBO_DURATION); // Ensure cap
             return true;
         }
         return false;
@@ -286,10 +287,10 @@ export class GameState {
     upgradeAutoPuncherPower() {
         // Calculate cost based on current auto puncher power level
         const powerLevel = this.autoPuncherPower - config.autoPuncherPower + 1;
-        const upgradeCost = Math.ceil(1000 * Math.pow(2.5, powerLevel));
+        const upgradeCost = Math.ceil(GAME_CONSTANTS.SCALING.AUTO_PUNCHER_POWER_UPGRADE_BASE_COST * Math.pow(GAME_CONSTANTS.SCALING.AUTO_PUNCHER_POWER_UPGRADE_MULTIPLIER, powerLevel));
         
-        // Cap auto puncher power at 100
-        if (this.autoPuncherPower >= 100) {
+        // Cap auto puncher power at configured maximum
+        if (this.autoPuncherPower >= GAME_CONSTANTS.LIMITS.MAX_AUTO_PUNCHER_POWER) {
             return false;
         }
         
@@ -319,8 +320,8 @@ export class GameState {
             // Award 1 prestige point per prestige (simple and predictable)
             this.prestigePoints += 1;
             
-            // Scale prestige requirement more reasonably (2x multiplier)
-            this.prestigeRequirement = Math.floor(this.prestigeRequirement * 2);
+            // Scale prestige requirement using configured multiplier
+            this.prestigeRequirement = Math.floor(this.prestigeRequirement * GAME_CONSTANTS.SCALING.PRESTIGE_REQUIREMENT_MULTIPLIER);
             
             // Reset basic game state but preserve some upgrades for progression
             this.count = 0;
@@ -347,9 +348,123 @@ export class GameState {
         return false;
     }
 
+    // Export game data for backup
+    exportData() {
+        return {
+            count: this.count,
+            power: this.power,
+            cost: this.cost,
+            combo: this.combo,
+            maxCombo: this.maxCombo,
+            totalPunches: this.totalPunches,
+            critChance: this.critChance,
+            critMultiplier: this.critMultiplier,
+            comboDuration: this.comboDuration,
+            autoPunchers: this.autoPunchers,
+            autoPuncherCost: this.autoPuncherCost,
+            autoPuncherPower: this.autoPuncherPower,
+            autoPuncherSpeed: this.autoPuncherSpeed,
+            prestigePoints: this.prestigePoints,
+            prestigeRequirement: this.prestigeRequirement,
+            achievementBonuses: { ...this.achievementBonuses },
+            achievements: { ...this.achievements },
+            recentPunches: [...this.recentPunches],
+            exportTimestamp: Date.now()
+        };
+    }
+
+    // Import game data from backup
+    importData(data) {
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid import data');
+        }
+
+        // Validate and import core game state
+        this.count = Math.max(0, data.count || 0);
+        this.power = Math.max(1, data.power || 1);
+        this.cost = Math.max(10, data.cost || 10);
+        this.combo = Math.max(1, data.combo || 1);
+        this.maxCombo = Math.max(1, data.maxCombo || 1);
+        this.totalPunches = Math.max(0, data.totalPunches || 0);
+        
+        // Import upgrade values with validation
+        this.critChance = Math.max(config.critChance, Math.min(GAME_CONSTANTS.LIMITS.MAX_CRIT_CHANCE, data.critChance || config.critChance));
+        this.critMultiplier = Math.max(config.critMultiplier, Math.min(GAME_CONSTANTS.LIMITS.MAX_CRIT_MULTIPLIER, data.critMultiplier || config.critMultiplier));
+        this.comboDuration = Math.max(config.comboDuration, Math.min(GAME_CONSTANTS.LIMITS.MAX_COMBO_DURATION, data.comboDuration || config.comboDuration));
+        
+        // Import auto puncher data
+        this.autoPunchers = Math.max(0, data.autoPunchers || 0);
+        this.autoPuncherCost = Math.max(config.initialAutoPuncherCost, data.autoPuncherCost || config.initialAutoPuncherCost);
+        this.autoPuncherPower = Math.max(config.autoPuncherPower, Math.min(GAME_CONSTANTS.LIMITS.MAX_AUTO_PUNCHER_POWER, data.autoPuncherPower || config.autoPuncherPower));
+        this.autoPuncherSpeed = Math.max(1, data.autoPuncherSpeed || 1);
+        
+        // Import prestige data
+        this.prestigePoints = Math.max(0, data.prestigePoints || 0);
+        this.prestigeRequirement = Math.max(config.PRESTIGE_REQUIREMENT, data.prestigeRequirement || config.PRESTIGE_REQUIREMENT);
+        
+        // Import achievement bonuses
+        if (data.achievementBonuses && typeof data.achievementBonuses === 'object') {
+            this.achievementBonuses = {
+                critChanceBonus: Math.max(0, data.achievementBonuses.critChanceBonus || 0),
+                critMultiplierBonus: Math.max(0, data.achievementBonuses.critMultiplierBonus || 0),
+                comboDurationBonus: Math.max(0, data.achievementBonuses.comboDurationBonus || 0),
+                autoPuncherPowerBonus: Math.max(0, data.achievementBonuses.autoPuncherPowerBonus || 0),
+                prestigeBonus: Math.max(0, data.achievementBonuses.prestigeBonus || 0),
+                powerEfficiencyBonus: Math.max(0, data.achievementBonuses.powerEfficiencyBonus || 0)
+            };
+        }
+        
+        // Import achievements
+        if (data.achievements && typeof data.achievements === 'object') {
+            this.achievements = { ...this.achievements, ...data.achievements };
+        }
+        
+        // Import recent punches (for speed achievements)
+        if (Array.isArray(data.recentPunches)) {
+            this.recentPunches = data.recentPunches.filter(time => typeof time === 'number' && time > 0);
+        }
+        
+        // Save the imported data
+        this.saveGameData();
+    }
+
     // Reset all game data
     resetGame() {
-        localStorage.clear();
+        // Clear only game data, preserve user settings
+        GameDataManager.clearSaveData();
+        
+        // Reset all game state properties to initial values
+        this.count = 0;
+        this.power = 1;
+        this.cost = config.initialCost;
+        this.combo = 1;
+        this.comboTimer = null;
+        this.prestigePoints = 0;
+        this.prestigeRequirement = config.PRESTIGE_REQUIREMENT;
+        this.autoPuncherCost = config.initialAutoPuncherCost;
+        this.autoPunchers = 0;
+        this.critChance = config.critChance;
+        this.critMultiplier = config.critMultiplier;
+        this.comboDuration = config.comboDuration;
+        this.autoPuncherPower = config.autoPuncherPower;
+        this.autoPuncherSpeed = 1;
+        this.unlockedAchievements = {};
+        this.totalPunches = 0;
+        this.maxCombo = 1;
+        this.recentPunches = [];
+        this.achievementBonuses = {
+            critChanceBonus: 0,
+            critMultiplierBonus: 0,
+            comboDurationBonus: 0,
+            autoPuncherPowerBonus: 0,
+            prestigeBonus: 0,
+            powerEfficiencyBonus: 0
+        };
+        
+        // Save the reset state
+        this.saveGameData();
+        
+        // Reload the page to ensure all UI is properly reset
         location.reload();
     }
 }

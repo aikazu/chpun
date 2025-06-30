@@ -9,6 +9,136 @@ export const config = {
     initialAutoPuncherCost: 50,
 };
 
+// Game constants for better maintainability
+export const GAME_CONSTANTS = {
+    UI: {
+        // Animation durations
+        ANIMATION_DURATION: 150,
+        PARTICLE_LIFETIME: 1000,
+        NOTIFICATION_DURATION: 3000,
+        UPDATE_THROTTLE: 16, // ~60fps
+        FLOATING_NUMBER_DURATION: 1500,
+        FLOATING_DAMAGE_DURATION: 1.5,
+        MILESTONE_DISPLAY_DURATION: 1500,
+        COMBO_BAR_UPDATE_DURATION: 100,
+        COMBO_RESET_DURATION: 0.3,
+        COMBO_FADE_DURATION: 0.2,
+        MILESTONE_ANIMATION_DURATION: 0.6,
+        MILESTONE_FADE_DURATION: 0.4,
+        MILESTONE_DISPLAY_TIME: 3000,
+        
+        // Update intervals
+        UPDATE_INTERVAL: 100, // Main UI update interval (ms)
+        AUTO_PUNCH_INTERVAL: 1000, // Auto puncher interval (ms)
+        
+        // Z-index values
+        FLOATING_DAMAGE_Z_INDEX: 1000,
+        MILESTONE_Z_INDEX: 10000,
+        
+        // Colors
+        CRIT_COLOR: '#ffff00',
+        NORMAL_DAMAGE_COLOR: '#ffffff',
+        DEFAULT_TEXT_COLOR: '#ecf0f1',
+        COMMON_COMBO_COLOR: '#2ecc71',
+        UNCOMMON_COMBO_COLOR: '#3498db',
+        RARE_COMBO_COLOR: '#9b59b6',
+        LEGENDARY_COMBO_COLOR: '#ff6b35',
+        
+        // Combo bar colors
+        COMBO_BAR_SAFE_COLOR: '#2ecc71',
+        COMBO_BAR_WARNING_COLOR: '#f39c12',
+        COMBO_BAR_DANGER_COLOR: '#e74c3c',
+        COMBO_BAR_WARNING_THRESHOLD: 60,
+        COMBO_BAR_DANGER_THRESHOLD: 30,
+        
+        // Font sizes
+        CRIT_FONT_SIZE: '24px',
+        NORMAL_FONT_SIZE: '18px',
+        
+        // Animation distances and spreads
+        FLOATING_DAMAGE_RISE: 80,
+        FLOATING_DAMAGE_SPREAD: 100,
+        FLOATING_DAMAGE_VERTICAL_SPREAD: 50
+    },
+    SCALING: {
+        POWER_COST_MULTIPLIER: 1.5,
+        AUTO_PUNCHER_COST_MULTIPLIER: 1.5,
+        PRESTIGE_REQUIREMENT_MULTIPLIER: 2,
+        CRIT_CHANCE_INCREMENT: 0.005,
+        COMBO_DURATION_INCREMENT: 100,
+        CRIT_CHANCE_UPGRADE_BASE_COST: 100,
+        CRIT_CHANCE_UPGRADE_MULTIPLIER: 2,
+        CRIT_MULTIPLIER_UPGRADE_BASE_COST: 500,
+        CRIT_MULTIPLIER_UPGRADE_MULTIPLIER: 3,
+        COMBO_DURATION_UPGRADE_BASE_COST: 200,
+        COMBO_DURATION_UPGRADE_MULTIPLIER: 1.8,
+        AUTO_PUNCHER_POWER_UPGRADE_BASE_COST: 1000,
+        AUTO_PUNCHER_POWER_UPGRADE_MULTIPLIER: 2.5
+    },
+    LIMITS: {
+        MAX_CRIT_CHANCE: 0.5,
+        MAX_CRIT_MULTIPLIER: 20,
+        MAX_COMBO_DURATION: 10000,
+        MAX_AUTO_PUNCHER_POWER: 100,
+        MAX_CONCURRENT_POWERUPS: 3,
+        MAX_PARTICLES_PER_PUNCH: 100,
+        MIN_PARTICLES_PER_PUNCH: 30,
+        MAX_PRESTIGE_POINTS: 1000000,
+        MAX_ERROR_LOG_SIZE: 100
+    },
+    COMBO: {
+        BASE_DURATION: 3000,
+        DECAY_RATE: 0.95,
+        MILESTONE_THRESHOLDS: [10, 25, 50, 100, 250, 500, 1000],
+        MAX_FOR_FULL_BAR: 100,
+        HIGH_COMBO_THRESHOLD: 50,
+        COMMON_THRESHOLD: 10,
+        UNCOMMON_THRESHOLD: 25,
+        RARE_THRESHOLD: 50,
+        LEGENDARY_THRESHOLD: 100,
+        TIER_COLORS: {
+            BASIC: '#ecf0f1',
+            COMMON: '#2ecc71',
+            UNCOMMON: '#3498db',
+            RARE: '#9b59b6',
+            EPIC: '#ff6b35'
+        },
+        TIER_THRESHOLDS: {
+            COMMON: 10,
+            UNCOMMON: 25,
+            RARE: 50,
+            EPIC: 100
+        }
+    },
+    POWERUPS: {
+        SPAWN_INTERVAL: 30000, // 30 seconds
+        SPAWN_CHANCE: 0.3, // 30% chance per interval
+        SAFE_SPAWN_MARGIN: 100, // pixels from UI elements
+        DESPAWN_TIME: 15000 // 15 seconds
+    },
+    PARTICLES: {
+        DEFAULT_COLOR: '#ff6b6b',
+        SIZE: 6,
+        Z_INDEX: 1000,
+        SPREAD: 200,
+        RISE_MIN: 100,
+        RISE_VARIANCE: 100,
+        DURATION_MIN: 1,
+        DURATION_VARIANCE: 0.5,
+        CRIT_COUNT: 100,
+        NORMAL_COUNT: 30,
+        MILESTONE_COUNT: 15,
+        MILESTONE_SIZE: 8,
+        MILESTONE_SPREAD: 200,
+        MILESTONE_LIFETIME: 800
+    },
+    ACHIEVEMENTS: {
+        SPEED_DEMON_THRESHOLD: 100, // punches in 10 seconds
+        SPEED_DEMON_TIME_WINDOW: 10000, // 10 seconds
+        OVER_9000_THRESHOLD: 9000
+    }
+};
+
 // Achievement definitions
 export const achievements = {
     // Punch Count Achievements

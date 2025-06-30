@@ -7,7 +7,9 @@ import { PowerUpManager } from './powerUps.js';
 import { ComboManager } from './combo.js';
 import { UpgradeManager } from './upgrades.js';
 import { SettingsManager } from './settings.js';
-import { createParticles, showFloatingNumber, updateGameUI, animatePunchTarget } from './ui.js';
+import { showNotification, showFloatingNumber, updateComboDisplay, resetComboDisplay, createParticle, showFloatingDamage } from './ui.js';
+import { GAME_CONSTANTS } from './config.js';
+import { UIManager } from './uiManager.js';
 
 // Game controller class
 class Game {
@@ -37,6 +39,7 @@ class Game {
         this.comboManager = new ComboManager(this.gameState);
         this.upgradeManager = new UpgradeManager(this.gameState, this.modal);
         this.settingsManager = new SettingsManager(this.gameState, this.modal);
+        this.uiManager = new UIManager();
         
         // Connect managers to game state
         this.gameState.powerUpManager = this.powerUpManager;
@@ -46,7 +49,7 @@ class Game {
         this.settingsManager.loadSettings();
         
         // Initial UI update
-        updateGameUI(this.gameState);
+        this.updateGame();
     }
 
     // Setup event listeners
@@ -73,13 +76,20 @@ class Game {
         // Add punches to count
         this.gameState.addPunches(amount);
         
+        // Show floating damage number and particles
+        const x = event.clientX + (Math.random() - 0.5) * GAME_CONSTANTS.UI.FLOATING_DAMAGE_SPREAD;
+        const y = event.clientY + (Math.random() - 0.5) * GAME_CONSTANTS.UI.FLOATING_DAMAGE_VERTICAL_SPREAD;
+        
+        showFloatingDamage(Math.floor(amount), x, y, isCrit);
+        
+        // Create particles for visual feedback
+        const particleColor = isCrit ? GAME_CONSTANTS.UI.CRIT_COLOR : GAME_CONSTANTS.PARTICLES.DEFAULT_COLOR;
+        for (let i = 0; i < (isCrit ? GAME_CONSTANTS.PARTICLES.CRIT_COUNT : GAME_CONSTANTS.PARTICLES.NORMAL_COUNT); i++) {
+            createParticle(x + (Math.random() - 0.5) * 20, y + (Math.random() - 0.5) * 20, particleColor);
+        }
+        
         // Play sound
         this.playPunchSound();
-        
-        // Visual effects
-        animatePunchTarget();
-        createParticles(isCrit ? 100 : 30);
-        showFloatingNumber(Math.floor(amount), event.clientX, event.clientY, isCrit);
         
         // Handle combo
         this.comboManager.handleCombo();
@@ -127,7 +137,33 @@ class Game {
 
     // Update game state and UI
     updateGame() {
-        updateGameUI(this.gameState);
+        // Update basic stats using UIManager for better performance
+        this.uiManager.updateText('punch-count', this.gameState.count.toLocaleString());
+        
+        // Update combo display
+        const comboStats = this.comboManager.getComboStats();
+        updateComboDisplay(comboStats.current, comboStats.bonus, comboStats.timeRemaining);
+        
+        // Show prestige button when available
+        if (this.gameState.canPrestige()) {
+            this.uiManager.removeClass('prestige-button', 'hidden');
+        } else {
+            this.uiManager.addClass('prestige-button', 'hidden');
+        }
+        
+        // Update prestige button
+        const prestigeBtn = document.getElementById('prestige-btn');
+        if (prestigeBtn) {
+            if (this.gameState.canPrestige()) {
+                prestigeBtn.disabled = false;
+                prestigeBtn.textContent = 'Prestige Available!';
+            } else {
+                prestigeBtn.disabled = true;
+                const remaining = this.gameState.prestigeRequirement - this.gameState.count;
+                prestigeBtn.textContent = `Need ${remaining.toLocaleString()} more`;
+            }
+        }
+        
         this.achievementManager.checkAchievements();
         this.gameState.saveGameData();
     }
@@ -139,10 +175,14 @@ class Game {
             const autoPunchAmount = this.gameState.getAutoPunchAmount();
             if (autoPunchAmount > 0) {
                 this.gameState.addPunches(autoPunchAmount);
-                updateGameUI(this.gameState);
-                this.gameState.saveGameData();
+                this.updateGame();
             }
-        }, 1000);
+        }, GAME_CONSTANTS.UI.AUTO_PUNCH_INTERVAL);
+        
+        // Main game loop for UI updates
+        setInterval(() => {
+            this.updateGame();
+        }, GAME_CONSTANTS.UI.UPDATE_INTERVAL);
     }
 }
 
