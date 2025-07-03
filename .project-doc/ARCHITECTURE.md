@@ -1,29 +1,38 @@
-# System Diagram
+## Architecture
+
+### System Diagram
 
 ```
 +-----------------+      +-----------------+      +-----------------+
-|   index.html    |----->|    style.css    |      |   script.js     |
+|   Game Client   |----->|  Game Logic     |----->|   UI Renderer   |
+| (HTML/CSS/JS)   |      | (JavaScript)    |      | (DOM)           |
 +-----------------+      +-----------------+      +-----------------+
-        |                      ^                      |
-        |                      |                      |
-        v                      v                      v
-+-------------------------------------------------------------+
-|                        Browser                              |
-+-------------------------------------------------------------+
+        ^
+        |
+        v
++-----------------+
+| Firebase        |
+| Firestore       |
+| (Leaderboard)   |
++-----------------+
 ```
 
-# Data Model
+### Data Model
 
-*   **`count`**: A number that stores the number of punches.
-*   **`name`**: A string that stores the name of the person being punched.
-*   **`image`**: A string that stores the URL of the image being punched.
+*   **Player:**
+    *   `nickname`: string
+    *   `totalLifetimeEarnings`: number
+*   **Game State (Local Storage):**
+    *   `currentMoney`: number
+    *   `goldenGloves`: number
+    *   `upgrades`: object (e.g., `{ gloves: 1, autoPunchers: 0 }`)
 
-# Design Patterns
+### Design Patterns
 
-*   **Observer Pattern**: The `click` event on the punch target is observed to update the punch count.
-*   **Module Pattern**: The JavaScript code is organized into modules to separate concerns.
+*   **Model-View-Controller (MVC):** The game logic (Model) will be separated from the UI (View) and the user input (Controller).
+*   **Observer:** Upgrades and game events will use an observer pattern to notify different parts of the game when changes occur.
 
-# Security & Performance
+### Security & Performance
 
-*   The game is entirely client-side, so there are no major security concerns.
-*   Performance is not a major concern for this simple game.
+*   **Security:** The leaderboard will be secured using Firebase's security rules to prevent tampering.
+*   **Performance:** The game will be optimized to minimize DOM updates and ensure a smooth user experience, especially during rapid clicking.

@@ -152,8 +152,3 @@ _This section provides specific, enforceable standards for all code, assets, and
 - **Progress Tracking**: Use standardized visual markers.
   - **Component Progress**: `Component: [████░░░░░░] 40%`
   - **Task Status Icons**: `T001 ✓ | T002 🚧 | T003 ❌` (Done | In Progress | Blocked)
-
-### 🖼️ Asset Generation
-
-- **Assets**: Make sure all assets are high quality, royalty free.
-- **SVG Preference**: If image assets are required (e.g., for external documentation), generate an SVG version for scalability and maintainability if no relate assets found in internet or preserved.
