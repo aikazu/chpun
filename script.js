@@ -54,9 +54,39 @@ const upgrades = [
         type: 'active'
     },
     {
+        name: 'Spiked Gauntlets',
+        cost: 1000,
+        moneyPerPunch: 25,
+        type: 'active'
+    },
+    {
+        name: 'Golden Fists',
+        cost: 10000,
+        moneyPerPunch: 100,
+        type: 'active'
+    },
+    {
         name: 'A Ticking Metronome',
         cost: 50,
         moneyPerSecond: 1,
+        type: 'passive'
+    },
+    {
+        name: 'A Mechanical Piston',
+        cost: 500,
+        moneyPerSecond: 10,
+        type: 'passive'
+    },
+    {
+        name: 'A Disgruntled Intern',
+        cost: 5000,
+        moneyPerSecond: 100,
+        type: 'passive'
+    },
+    {
+        name: 'An Orbiting Fist Satellite',
+        cost: 50000,
+        moneyPerSecond: 1000,
         type: 'passive'
     }
 ];
@@ -64,7 +94,10 @@ const upgrades = [
 const arenaOpponents = [
     { name: 'Tomato', value: 10000, reward: 100000 },
     { name: 'Brick', value: 100000, reward: 1000000 },
-    { name: 'Car', value: 1000000, reward: 10000000 }
+    { name: 'Car', value: 1000000, reward: 10000000 },
+    { name: 'T-Rex', value: 10000000, reward: 100000000 },
+    { name: 'Skyscraper', value: 100000000, reward: 1000000000 },
+    { name: 'Mountain', value: 1000000000, reward: 10000000000 }
 ];
 
 objectImage.addEventListener('click', () => {
